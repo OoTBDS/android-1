@@ -95,6 +95,7 @@ public class Preferences extends PreferenceActivity
     private AppCompatDelegate mDelegate;
 
     private String mUploadPath;
+    private String mUploadPathAccount;
     private PreferenceCategory mPrefInstantUploadCategory;
     private Preference mPrefInstantUpload;
     private Preference mPrefInstantUploadBehaviour;
@@ -108,6 +109,7 @@ public class Preferences extends PreferenceActivity
     private Preference mPrefInstantVideoUploadPathWiFi;
     private Preference mPrefInstantVideoUploadOnlyOnCharging;
     private String mUploadVideoPath;
+    private String mUploadVideoPathAccount;
     private ListPreference mPrefStoragePath;
     private String mStoragePath;
 
@@ -594,8 +596,10 @@ public class Preferences extends PreferenceActivity
 
             mUploadPath = DisplayUtils.getPathWithoutLastSlash(mUploadPath);
 
+            mUploadPathAccount = AccountUtils.getCurrentOwnCloudAccount(MainApp.getAppContext()).name;
+
             // Show the path on summary preference
-            mPrefInstantUploadPath.setSummary(mUploadPath);
+            mPrefInstantUploadPath.setSummary(getUploadAccountPath(mUploadPathAccount, mUploadPath));
 
             saveInstantUploadPathOnPreferences();
 
@@ -607,8 +611,10 @@ public class Preferences extends PreferenceActivity
 
             mUploadVideoPath = DisplayUtils.getPathWithoutLastSlash(mUploadVideoPath);
 
+            mUploadVideoPathAccount = AccountUtils.getCurrentOwnCloudAccount(MainApp.getAppContext()).name;
+
             // Show the video path on summary preference
-            mPrefInstantVideoUploadPath.setSummary(mUploadVideoPath);
+            mPrefInstantVideoUploadPath.setSummary(getUploadAccountPath(mUploadVideoPathAccount, mUploadVideoPath));
 
             saveInstantUploadVideoPathOnPreferences();
         } else if (requestCode == ACTION_REQUEST_PASSCODE && resultCode == RESULT_OK) {
@@ -717,13 +723,22 @@ public class Preferences extends PreferenceActivity
     }
 
     /**
+     * Returns a combined string of accountName and uploadPath to be displayed to user.
+     */
+    private String getUploadAccountPath(String accountName, String uploadPath) {
+        return accountName + ":" + uploadPath;
+    }
+
+    /**
      * Load upload path set on preferences
      */
     private void loadInstantUploadPath() {
         SharedPreferences appPrefs =
                 PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         mUploadPath = appPrefs.getString(PreferenceKeys.INSTANT_UPLOAD_PATH, getString(R.string.instant_upload_path));
-        mPrefInstantUploadPath.setSummary(mUploadPath);
+        mUploadPathAccount = appPrefs.getString("instant_upload_path_account",
+                AccountUtils.getCurrentOwnCloudAccount(MainApp.getAppContext()).name);
+        mPrefInstantUploadPath.setSummary(getUploadAccountPath(mUploadPathAccount, mUploadPath));
     }
 
     /**
@@ -762,6 +777,7 @@ public class Preferences extends PreferenceActivity
                 PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         SharedPreferences.Editor editor = appPrefs.edit();
         editor.putString(PreferenceKeys.INSTANT_UPLOAD_PATH, mUploadPath);
+        editor.putString("instant_upload_path_account", mUploadPathAccount);
         editor.commit();
     }
 
@@ -772,17 +788,20 @@ public class Preferences extends PreferenceActivity
         SharedPreferences appPrefs =
                 PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         mUploadVideoPath = appPrefs.getString("instant_video_upload_path", getString(R.string.instant_upload_path));
-        mPrefInstantVideoUploadPath.setSummary(mUploadVideoPath);
+        mUploadVideoPathAccount = appPrefs.getString("instant_video_upload_path_account",
+                AccountUtils.getCurrentOwnCloudAccount(MainApp.getAppContext()).name);
+        mPrefInstantVideoUploadPath.setSummary(getUploadAccountPath(mUploadVideoPathAccount, mUploadVideoPath));
     }
 
     /**
-     * Save the "Instant Video Upload Path" on preferences
+     * Save the "Instant Video Upload Path" and corresponding account on preferences
      */
     private void saveInstantUploadVideoPathOnPreferences() {
         SharedPreferences appPrefs =
                 PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         SharedPreferences.Editor editor = appPrefs.edit();
         editor.putString(PreferenceKeys.INSTANT_VIDEO_UPLOAD_PATH, mUploadVideoPath);
+        editor.putString("instant_video_upload_path_account", mUploadVideoPathAccount);
         editor.commit();
     }
 
